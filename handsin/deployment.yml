@@ -63,12 +63,30 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: app-config
+  name: nginx-config
 data:
   # キー: 値 の形式で設定を記述
   APP_NAME: "MyRestaurant"
   APP_ENV: "development"
   LOG_LEVEL: "info"
+
+  # キー = ファイル名、値 = ファイルの中身
+  default.conf: |
+    server {
+        listen       80;
+        server_name  localhost;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html;
+        }
+
+        # カスタム：ヘルスチェック用エンドポイント
+        location /health {
+            return 200 'OK';
+            add_header Content-Type text/plain;
+        }
+    }
 
 ---
 # app-secret.yaml
@@ -93,18 +111,24 @@ stringData:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: secret-demo
+  name: nginx-config-demo
 spec:
   containers:
-    - name: demo
-      image: busybox
-      # 起動後、環境変数を表示してスリープ
-      command: ["sh", "-c", "echo APP_NAME=$APP_NAME && echo APP_ENV=$APP_ENV && echo LOG_LEVEL=$LOG_LEVEL && sleep 3600"]
+    - name: nginx
+      image: nginx:1.25
+      ports:
+        - containerPort: 80
+
+      # ConfigMapをファイルとしてマウント
+      volumeMounts:
+        - name: nginx-conf-volume          # ボリューム名
+          mountPath: /etc/nginx/conf.d     # マウント先のパス
+          readOnly: true
 
       # ConfigMapから環境変数を一括読み込み
       envFrom:
         - configMapRef:
-            name: app-config     # ← ConfigMapの名前を指定
+            name: nginx-config     # ← ConfigMapの名前を指定
 
       # Secretから個別に環境変数を読み込み
       env:
@@ -119,3 +143,9 @@ spec:
             secretKeyRef:
               name: app-secret
               key: API_KEY
+
+  # ボリュームの定義
+  volumes:
+    - name: nginx-conf-volume              # volumeMountsのnameと一致させる
+      configMap:
+        name: nginx-config                 # ConfigMap名
