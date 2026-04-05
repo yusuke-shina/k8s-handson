@@ -36,15 +36,15 @@ spec:
 
 ---
 # nginx-service-clusterip.yaml
-# ClusterIP Service = お店の内線電話
+# NodePort Service = お店の直通電話
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-clusterip
+  name: nginx-nodeport
 spec:
-  # ClusterIP（デフォルト。省略してもClusterIPになる）
-  type: ClusterIP
+  # NodePort（外部からアクセス可能）
+  type: NodePort
 
   # どのPodに振り分けるか（ラベルで紐づけ）
   selector:
@@ -54,4 +54,4 @@ spec:
   ports:
     - port: 80                # Serviceが受け付けるポート
       targetPort: 80          # Pod側のポート
-
+      nodePort: 30080         # 外部からアクセスするためのポート
