@@ -55,3 +55,37 @@ spec:
     - port: 80                # Serviceが受け付けるポート
       targetPort: 80          # Pod側のポート
       nodePort: 30080         # 外部からアクセスするためのポート
+
+---
+# app-configmap.yaml
+# ConfigMap = メニュー表（一般的な設定情報）
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # キー: 値 の形式で設定を記述
+  APP_NAME: "MyRestaurant"
+  APP_ENV: "development"
+  LOG_LEVEL: "info"
+
+---
+# pod-with-configmap.yaml
+# ConfigMapから環境変数を受け取るPod
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-demo
+spec:
+  containers:
+    - name: demo
+      image: busybox
+      # 起動後、環境変数を表示してスリープ
+      command: ["sh", "-c", "echo APP_NAME=$APP_NAME && echo APP_ENV=$APP_ENV && echo LOG_LEVEL=$LOG_LEVEL && sleep 3600"]
+
+      # ConfigMapから環境変数を一括読み込み
+      envFrom:
+        - configMapRef:
+            name: app-config     # ← ConfigMapの名前を指定
