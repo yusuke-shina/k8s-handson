@@ -6,7 +6,6 @@ metadata:
     name: production
 
 ---
-
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -25,7 +24,7 @@ kind: Deployment
 # Deploymentの名前
 metadata:
   name: nginx-deployment
-  namespace: production   # ← どのNamespaceに属するか指定
+  namespace: production # ← どのNamespaceに属するか指定
 
 # Deploymentの仕様（店長への指示内容）
 spec:
@@ -48,9 +47,16 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.25       # 使用するイメージ
+          image: nginx:1.25 # 使用するイメージ
           ports:
-            - containerPort: 80   # コンテナ内のポート
+            - containerPort: 80 # コンテナ内のポート
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
 
 ---
 # nginx-deployment.yaml
@@ -63,7 +69,7 @@ kind: Deployment
 # Deploymentの名前
 metadata:
   name: nginx-deployment
-  namespace: development   # ← どのNamespaceに属するか指定
+  namespace: development # ← どのNamespaceに属するか指定
 
 # Deploymentの仕様（店長への指示内容）
 spec:
@@ -86,9 +92,16 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:latest   # 使用するイメージ
+          image: nginx:latest # 使用するイメージ
           ports:
-            - containerPort: 80   # コンテナ内のポート
+            - containerPort: 80 # コンテナ内のポート
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
 
 ---
 # nginx-service-clusterip.yaml
@@ -104,13 +117,13 @@ spec:
 
   # どのPodに振り分けるか（ラベルで紐づけ）
   selector:
-    app: nginx                # ← Deploymentの labels と一致させる
+    app: nginx # ← Deploymentの labels と一致させる
 
   # ポート設定
   ports:
-    - port: 80                # Serviceが受け付けるポート
-      targetPort: 80          # Pod側のポート
-      nodePort: 30080         # 外部からアクセスするためのポート
+    - port: 80 # Serviceが受け付けるポート
+      targetPort: 80 # Pod側のポート
+      nodePort: 30080 # 外部からアクセスするためのポート
 
 ---
 # app-configmap.yaml
@@ -159,7 +172,6 @@ stringData:
   DB_PASSWORD: "super_secret_password"
   API_KEY: "ak_1234567890abcdef"
 
-
 ---
 # pod-with-configmap.yaml
 # ConfigMapから環境変数を受け取るPod
@@ -173,43 +185,69 @@ spec:
     # コンテナ1：データを書き込む（料理人）
     - name: writer
       image: busybox
-      command: ["sh", "-c", "while true; do date >> /shared-data/log.txt; sleep 5; done"]
+      command:
+        [
+          "sh",
+          "-c",
+          "while true; do date >> /shared-data/log.txt; sleep 5; done",
+        ]
+      resources:
+        requests:
+          memory: "32Mi"
+          cpu: "50m"
+        limits:
+          memory: "64Mi"
+          cpu: "100m"
       volumeMounts:
         - name: shared-volume
-          mountPath: /shared-data       # 書き込み先
+          mountPath: /shared-data # 書き込み先
 
     # コンテナ2：データを読み取る（配膳係）
     - name: reader
       image: busybox
       command: ["sh", "-c", "tail -f /shared-data/log.txt"]
+      resources:
+        requests:
+          memory: "32Mi"
+          cpu: "50m"
+        limits:
+          memory: "64Mi"
+          cpu: "100m"
       volumeMounts:
         - name: shared-volume
-          mountPath: /shared-data       # 読み取り元（同じボリューム）
+          mountPath: /shared-data # 読み取り元（同じボリューム）
 
     # コンテナ3：nginx（店長）
     - name: nginx
       image: nginx:1.25
       ports:
         - containerPort: 80
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
 
       # ConfigMapをファイルとしてマウント
       volumeMounts:
-        - name: nginx-conf-volume          # ボリューム名
-          mountPath: /etc/nginx/conf.d     # マウント先のパス
+        - name: nginx-conf-volume # ボリューム名
+          mountPath: /etc/nginx/conf.d # マウント先のパス
           readOnly: true
 
       # ConfigMapから環境変数を一括読み込み
       envFrom:
         - configMapRef:
-            name: nginx-config     # ← ConfigMapの名前を指定
+            name: nginx-config # ← ConfigMapの名前を指定
 
       # Secretから個別に環境変数を読み込み
       env:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: app-secret       # Secret名
-              key: DB_PASSWORD       # Secretのキー
+              name: app-secret # Secret名
+              key: DB_PASSWORD # Secretのキー
 
         - name: API_KEY
           valueFrom:
@@ -219,8 +257,8 @@ spec:
 
   # ボリュームの定義
   volumes:
-    - name: nginx-conf-volume              # volumeMountsのnameと一致させる
+    - name: nginx-conf-volume # volumeMountsのnameと一致させる
       configMap:
-        name: nginx-config                 # ConfigMap名
+        name: nginx-config # ConfigMap名
     - name: shared-volume
-      emptyDir: {}                        # 空のディレクトリを共有するボリューム
+      emptyDir: {} # 空のディレクトリを共有するボリューム
