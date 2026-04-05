@@ -1,0 +1,62 @@
+# broken-config.yaml
+# ❌ ConfigMapの設定ミスでヘルスチェックが失敗するシナリオ
+
+---
+# ConfigMap（nginx設定）
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-broken-config
+data:
+  default.conf: |
+    server {
+        listen       8080;
+        server_name  localhost;
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html;
+        }
+    }
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-config-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broken-config
+  template:
+    metadata:
+      labels:
+        app: broken-config
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+          ports:
+            - containerPort: 80    # ← ここは80を期待
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: config-volume
+          configMap:
+            name: nginx-broken-config
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-config-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: broken-config
+  ports:
+    - port: 80                     # ← Serviceは80で受ける
+      targetPort: 80               # ← Podの80に転送するが...

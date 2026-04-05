@@ -1,0 +1,29 @@
+# pod-with-emptydir.yaml
+# emptyDir で2つのコンテナがデータを共有するPod
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-demo
+spec:
+  containers:
+    # コンテナ1：データを書き込む（料理人）
+    - name: writer
+      image: busybox
+      command: ["sh", "-c", "while true; do date >> /shared-data/log.txt; sleep 5; done"]
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /shared-data       # 書き込み先
+
+    # コンテナ2：データを読み取る（配膳係）
+    - name: reader
+      image: busybox
+      command: ["sh", "-c", "tail -f /shared-data/log.txt"]
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /shared-data       # 読み取り元（同じボリューム）
+
+  # emptyDir ボリューム（Pod起動時に空のディレクトリが作られる）
+  volumes:
+    - name: shared-volume
+      emptyDir: {}

@@ -1,0 +1,13 @@
+# broken-image.yaml
+# ❌ 意図的に壊れたPod（存在しないイメージ名）
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-image
+spec:
+  containers:
+    - name: app
+      image: nginx:99.99.99    # ← 存在しないバージョン！
+      ports:
+        - containerPort: 80

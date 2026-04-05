@@ -1,0 +1,18 @@
+# rolebinding-readonly.yaml
+# RoleBinding = ServiceAccountにRoleを紐づける
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prod-viewer-binding      # バインディング名
+  namespace: production
+subjects:
+  # 誰に（ServiceAccount）
+  - kind: ServiceAccount
+    name: prod-viewer            # ← serviceaccount.yaml の name と一致
+    namespace: production
+roleRef:
+  # 何の権限を（Role）
+  kind: Role
+  name: pod-reader               # ← role-readonly.yaml の name と一致
+  apiGroup: rbac.authorization.k8s.io

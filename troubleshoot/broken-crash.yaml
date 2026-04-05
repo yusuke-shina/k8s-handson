@@ -1,0 +1,13 @@
+# broken-crash.yaml
+# ❌ 意図的に壊れたPod（起動直後にエラー終了）
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-crash
+spec:
+  containers:
+    - name: app
+      image: busybox
+      # 存在しないコマンドを実行 → エラー終了
+      command: ["this-command-does-not-exist"]

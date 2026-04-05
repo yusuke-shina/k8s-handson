@@ -1,0 +1,23 @@
+# dev-deployment.yaml
+# development 用のDeployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: development        # ← Namespace を指定
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest   # 開発は最新バージョン
+          ports:
+            - containerPort: 80

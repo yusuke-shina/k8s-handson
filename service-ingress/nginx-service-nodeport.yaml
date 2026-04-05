@@ -1,0 +1,20 @@
+# nginx-service-nodeport.yaml
+# NodePort Service = お店の直通電話
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nodeport
+spec:
+  # NodePort（外部からアクセス可能）
+  type: NodePort
+
+  # どのPodに振り分けるか
+  selector:
+    app: nginx
+
+  # ポート設定
+  ports:
+    - port: 80                # Service内部のポート
+      targetPort: 80          # Pod側のポート
+      nodePort: 30080         # 外部公開ポート（30000-32767の範囲）

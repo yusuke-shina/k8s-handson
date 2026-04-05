@@ -1,0 +1,12 @@
+# app-configmap.yaml
+# ConfigMap = メニュー表（一般的な設定情報）
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # キー: 値 の形式で設定を記述
+  APP_NAME: "MyRestaurant"
+  APP_ENV: "development"
+  LOG_LEVEL: "info"

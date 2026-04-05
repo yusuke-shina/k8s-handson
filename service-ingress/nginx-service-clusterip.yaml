@@ -1,0 +1,19 @@
+# nginx-service-clusterip.yaml
+# ClusterIP Service = お店の内線電話
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-clusterip
+spec:
+  # ClusterIP（デフォルト。省略してもClusterIPになる）
+  type: ClusterIP
+
+  # どのPodに振り分けるか（ラベルで紐づけ）
+  selector:
+    app: nginx                # ← Deploymentの labels と一致させる
+
+  # ポート設定
+  ports:
+    - port: 80                # Serviceが受け付けるポート
+      targetPort: 80          # Pod側のポート

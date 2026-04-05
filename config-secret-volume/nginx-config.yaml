@@ -1,0 +1,25 @@
+# nginx-config.yaml
+# ConfigMap に nginx の設定ファイルを格納
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  # キー = ファイル名、値 = ファイルの中身
+  default.conf: |
+    server {
+        listen       80;
+        server_name  localhost;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html;
+        }
+
+        # カスタム：ヘルスチェック用エンドポイント
+        location /health {
+            return 200 'OK';
+            add_header Content-Type text/plain;
+        }
+    }

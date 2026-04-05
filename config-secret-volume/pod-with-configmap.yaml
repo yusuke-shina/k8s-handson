@@ -1,0 +1,18 @@
+# pod-with-configmap.yaml
+# ConfigMapから環境変数を受け取るPod
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-demo
+spec:
+  containers:
+    - name: demo
+      image: busybox
+      # 起動後、環境変数を表示してスリープ
+      command: ["sh", "-c", "echo APP_NAME=$APP_NAME && echo APP_ENV=$APP_ENV && echo LOG_LEVEL=$LOG_LEVEL && sleep 3600"]
+
+      # ConfigMapから環境変数を一括読み込み
+      envFrom:
+        - configMapRef:
+            name: app-config     # ← ConfigMapの名前を指定
