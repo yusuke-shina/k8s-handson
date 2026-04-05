@@ -111,9 +111,26 @@ stringData:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-config-demo
+  name: emptydir-demo
 spec:
   containers:
+    # コンテナ1：データを書き込む（料理人）
+    - name: writer
+      image: busybox
+      command: ["sh", "-c", "while true; do date >> /shared-data/log.txt; sleep 5; done"]
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /shared-data       # 書き込み先
+
+    # コンテナ2：データを読み取る（配膳係）
+    - name: reader
+      image: busybox
+      command: ["sh", "-c", "tail -f /shared-data/log.txt"]
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /shared-data       # 読み取り元（同じボリューム）
+
+    # コンテナ3：nginx（店長）
     - name: nginx
       image: nginx:1.25
       ports:
@@ -149,3 +166,5 @@ spec:
     - name: nginx-conf-volume              # volumeMountsのnameと一致させる
       configMap:
         name: nginx-config                 # ConfigMap名
+    - name: shared-volume
+      emptyDir: {}                        # 空のディレクトリを共有するボリューム
